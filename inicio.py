@@ -7,15 +7,20 @@ st.markdown('<h1 style="text-align:center">Bienvenid@ a "nombre de la app"</h1>'
 # Sobre el proyecto
 st.markdown('<h2 style="text-align:center"><em>¿Qué pasaría si pudiéramos ver cómo cambia el lugar donde vivimos?</em></h2>', unsafe_allow_html=True)
 
-st.write("""
+st.markdown("""
+<p style="text-align: justify;">
 Este proyecto nace de la interdisciplinaridad, la biología que comprende los ecosistemas, la física que traduce los datos y la antropología que conecta con las personas.
-
+</p>
+<p style="text-align: justify;">
 Juntas, estas perspectivas se integran para convertir datos en información simple y accesible: cómo crecen las ciudades, cuánta vegetación se pierde y donde se intensifica el impacto ambiental, así acercamos el conocimiento a la ciudadanía.
-
+</p>
+<p style="text-align: justify;">
 Nuestras métricas, obtenidas gracias a los datos abiertos y reproducibles, pueden ser usadas por alcaldías, comunidades y cualquier persona que quiera entender su territorio, reconocer los cambios que se producen y participar activamente en la toma de decisiones y la planificación de políticas públicas.
-
-No se trata solo de medir el territorio: _**se trata de darle a la gente los datos para cuidar su lugar en el mundo**_.
-""")
+</p>
+<p style="text-align: justify;">
+No se trata solo de medir el territorio: <em><strong>se trata de darle a la gente los datos para cuidar su lugar en el mundo</strong></em>.
+</p>
+""", unsafe_allow_html=True)
 
 # Conexión con los Objetivos de Desarrollo Sostenible
 st.markdown('<h2 style="text-align:center">Conexión con los Objetivos de Desarrollo Sostenible (ODS)</h2>', unsafe_allow_html=True)
