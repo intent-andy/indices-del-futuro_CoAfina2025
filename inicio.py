@@ -44,15 +44,15 @@ with explanation:
 
 icon, explanation = st.columns([1, 4], vertical_alignment="center")
 with icon:
-    st.image(str(ods_15), use_container_width=True)
-with explanation:
-    st.markdown('<p style="text-align: justify;">El uso de datos abiertos permite conocer y evaluar la degradación y conservación de los ecosistemas, vegetación y uso del suelo; lo que permite orientar estrategias de manejo sostenible y conservación de la vida de ecosistemas terrestres.</p>', unsafe_allow_html=True)
-
-icon, explanation = st.columns([1, 4], vertical_alignment="center")
-with icon:
     st.image(str(ods_13), use_container_width=True)
 with explanation:
     st.markdown('<p style="text-align: justify;">El proyecto contribuye a monitorear y evaluar el impacto ambiental mediante el uso de datos satelitales abiertos, estas métricas facilitan la toma de decisiones adaptadas al cambio climático.</p>', unsafe_allow_html=True)
+
+icon, explanation = st.columns([1, 4], vertical_alignment="center")
+with icon:
+    st.image(str(ods_15), use_container_width=True)
+with explanation:
+    st.markdown('<p style="text-align: justify;">El uso de datos abiertos permite conocer y evaluar la degradación y conservación de los ecosistemas, vegetación y uso del suelo; lo que permite orientar estrategias de manejo sostenible y conservación de la vida de ecosistemas terrestres.</p>', unsafe_allow_html=True)
 
 icon, explanation = st.columns([1, 4], vertical_alignment="center")
 with icon:
