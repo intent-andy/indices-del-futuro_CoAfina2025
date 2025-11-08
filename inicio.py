@@ -36,44 +36,26 @@ ods_16 = Path(__file__).parent / "images" / "S_SDG_Icons_Inverted_Transparent_WE
 st.image(str(banner), use_container_width=True)
 
 # Mostrar los ODS en dos columnas
-col1, col2 = st.columns(2)
+icon, explanation = st.columns([1, 4], vertical_alignment="center")
+with icon:
+    st.image(str(ods_11), use_container_width=True)
+with explanation:
+    st.markdown('<p style="text-align: justify;">Al elegir zonas periurbanas para nuestro proyecto, los resultados pueden ser utilizados para apoyar la planificación sostenible y monitorear variables urbanas y ambientales, contribuyendo así a ciudades y comunidades más sostenibles.</p>', unsafe_allow_html=True)
 
-# Mostrar cada ODS con su icono y explicación
-with col1:
-    icon, explanation = st.columns([1, 4], vertical_alignment="center")
-    with icon:
-        st.image(str(ods_11), use_container_width=True)
-    with explanation:
-        st.markdown('<p style="text-align: justify;">Al elegir zonas periurbanas para nuestro proyecto, los resultados pueden ser utilizados para apoyar la planificación sostenible y monitorear variables urbanas y ambientales, contribuyendo así a ciudades y comunidades más sostenibles.</p>', unsafe_allow_html=True)
-    
-    icon, explanation = st.columns([1, 4], vertical_alignment="center")
-    with icon:
-        st.image(str(ods_15), use_container_width=True)
-    with explanation:
-        st.markdown('<p style="text-align: justify;">El uso de datos abiertos permite conocer y evaluar la degradación y conservación de los ecosistemas, vegetación y uso del suelo; lo que permite orientar estrategias de manejo sostenible y conservación de la vida de ecosistemas terrestres.</p>', unsafe_allow_html=True)
+icon, explanation = st.columns([1, 4], vertical_alignment="center")
+with icon:
+    st.image(str(ods_15), use_container_width=True)
+with explanation:
+    st.markdown('<p style="text-align: justify;">El uso de datos abiertos permite conocer y evaluar la degradación y conservación de los ecosistemas, vegetación y uso del suelo; lo que permite orientar estrategias de manejo sostenible y conservación de la vida de ecosistemas terrestres.</p>', unsafe_allow_html=True)
 
-with col2:
-    icon, explanation = st.columns([1, 4], vertical_alignment="center")
-    with icon:
-        st.image(str(ods_13), use_container_width=True)
-    with explanation:
-        st.markdown('<p style="text-align: justify;">El proyecto contribuye a monitorear y evaluar el impacto ambiental mediante el uso de datos satelitales abiertos, estas métricas facilitan la toma de decisiones adaptadas al cambio climático.</p>', unsafe_allow_html=True)
+icon, explanation = st.columns([1, 4], vertical_alignment="center")
+with icon:
+    st.image(str(ods_13), use_container_width=True)
+with explanation:
+    st.markdown('<p style="text-align: justify;">El proyecto contribuye a monitorear y evaluar el impacto ambiental mediante el uso de datos satelitales abiertos, estas métricas facilitan la toma de decisiones adaptadas al cambio climático.</p>', unsafe_allow_html=True)
 
-    icon, explanation = st.columns([1, 4], vertical_alignment="center")
-    with icon:
-        st.image(str(ods_16), use_container_width=True)
-    with explanation:
-        st.markdown('<p style="text-align: justify;">La democratización de la acción climática al brindar conocimiento a la ciudadanía para ejercer voto inteligente, que les permita participar de forma activa en la resolución de problemas ambientales.</p>', unsafe_allow_html=True)
-
-# Objetivos de Desarrollo Sostenible (ODS) vinculados al reto
-
-# ODS 11: Ciudades y Comunidades Sostenibles; al elegir zonas periurbanas para nuestro proyecto, los resultados pueden ser utilizados para apoyar la planificación sostenible y monitorear variables.
-
-# ODS 13: Acción por el clima; el proyecto contribuye a monitorear y evaluar el impacto ambiental mediante el uso de datos satelitales abiertos, estas métricas facilitan la toma de decisiones adaptadas al cambio climático.
-
-# ODS 15: Vida de ecosistemas terrestres; el uso de datos abiertos permite conocer y evaluar la degradación y conservación de los ecosistemas, vegetación y uso del suelo; lo que permite orientar estrategias de manejo sostenible 
-
-# ODS 16. Promover sociedades justas, pacíficas e inclusivas; la democratización de la acción climática al brindar conocimiento a la ciudadanía para ejercer voto inteligente, que les permita participar de forma activa en la resolución de problemas ambientales.
-
-
-
+icon, explanation = st.columns([1, 4], vertical_alignment="center")
+with icon:
+    st.image(str(ods_16), use_container_width=True)
+with explanation:
+    st.markdown('<p style="text-align: justify;">La democratización de la acción climática al brindar conocimiento a la ciudadanía para ejercer voto inteligente, que les permita participar de forma activa en la resolución de problemas ambientales.</p>', unsafe_allow_html=True)
