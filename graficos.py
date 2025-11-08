@@ -1,10 +1,6 @@
 import streamlit as st
 import pandas as pd
 import csv
-from pathlib import Path
-
-ROOT_DIR = Path(__file__).parent
-
 
 # Cargar datos desde un archivo CSV
 def load_data(file):
@@ -62,18 +58,18 @@ year_range = st.slider("**Selecciona el rango de años**", 1985, 2024, (2000, 20
 # Si no se selecciona ninguna provincia, mostrar el gráfico de Argentina
 if zone is None or zone == "Argentina":
     st.header("Pérdida de Vegetación en Argentina")
-    data_file = ROOT_DIR / f"Time series of Vegetation loss • Annual by class • 1985 - 2024 (Argentina).csv"
-    contents = data_file.read_text()
-    data = load_data(contents)
+
+    data_file = f"time-series_data\Time series of Vegetation loss • Annual by class • 1985 - 2024 (Argentina).csv"
+    data = load_data(data_file)
 
     # Mostrar el gráfico con nombres en los ejes
     show_chart(data, primary_loss=st.session_state.veg_loss_primary, secondary_loss=st.session_state.veg_loss_secondary, start_year=year_range[0], end_year=year_range[1])
 
 elif zone:
     st.header(f"Pérdida de Vegetación en {zone}")
-    data_file = ROOT_DIR / f"Time series of Vegetation loss • Annual by class • 1985 - 2024 ({zone}).csv"
-    contents = data_file.read_text()
-    data = load_data(contents)
+
+    data_file = f"time-series_data\Time series of Vegetation loss • Annual by class • 1985 - 2024 ({zone}).csv"
+    data = load_data(data_file)
 
     # Mostrar el gráfico con nombres en los ejes
     show_chart(data, primary_loss=st.session_state.veg_loss_primary, secondary_loss=st.session_state.veg_loss_secondary, start_year=year_range[0], end_year=year_range[1])
