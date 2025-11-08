@@ -59,7 +59,7 @@ year_range = st.slider("**Selecciona el rango de años**", 1985, 2024, (2000, 20
 if zone is None or zone == "Argentina":
     st.header("Pérdida de Vegetación en Argentina")
 
-    data_file = f"time-series_data\Time series of Vegetation loss • Annual by class • 1985 - 2024 (Argentina).csv"
+    data_file = f"..\time-series_data\Time series of Vegetation loss • Annual by class • 1985 - 2024 (Argentina).csv"
     data = load_data(data_file)
 
     # Mostrar el gráfico con nombres en los ejes
@@ -68,7 +68,7 @@ if zone is None or zone == "Argentina":
 elif zone:
     st.header(f"Pérdida de Vegetación en {zone}")
 
-    data_file = f"time-series_data\Time series of Vegetation loss • Annual by class • 1985 - 2024 ({zone}).csv"
+    data_file = f"..\time-series_data\Time series of Vegetation loss • Annual by class • 1985 - 2024 ({zone}).csv"
     data = load_data(data_file)
 
     # Mostrar el gráfico con nombres en los ejes
