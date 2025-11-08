@@ -9,14 +9,24 @@ st.set_page_config(
     layout="wide"
 )
 
-# Sidebar navigation
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Live Analysis", "AI Model"])
+# Panel de navegación superior
+pages = {
+    "Inicio": [st.Page("bienvenida.py", title="Inicio")],
+    "Recursos": [
+        st.Page("mapas.py", title="Mapas"),
+        st.Page("graficos.py", title="Gráficos"),
+        st.Page("vid-int.py", title="Videos Interactivos")
+    ],
+    "Sobre nosotros": [st.Page("about.py", title="Sobre nosotros")]
+}
 
-# Main content
-if page == "Live Analysis":
-    st.title("📊 Live Analysis")
-    st.write("Real-time data analysis visualization")
+pg = st.navigation(pages, position="top")
+pg.run()
+
+# Contenido principal
+if page == "Análisis en Vivo":
+    st.title("📊 Análisis en Vivo")
+    st.write("Visualización de datos en tiempo real y métricas clave")
     
     # Simulated data for line chart
     chart_data = pd.DataFrame(
