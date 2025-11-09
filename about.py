@@ -8,9 +8,9 @@ st.divider()
 
 # Descripción del equipo
 st.markdown("""
-<p style="text-align: justify;"><strong>Neotropical</strong> es una equipo que se forma en el año 2023 con el objetivo de desarrollar una solución creativa e innovadora al reto "Quantum Eco-Quest" del Hackathon CoAfina 2023. Desde sus inicios, el equipo ha estado comprometido con la creación de herramientas que promuevan la sostenibilidad ambiental y la participación ciudadana haciendo uso de datos abiertos y herramientas de inteligencia artificial.</p>
+<p style="text-align: justify;">Somos un equipo multidisciplinario de estudiantes universitarios que nace en 2023 con el objetivo de desarrollar una solución innovadora al problema "Quantum Eco-Quest" del Hackathon CoAfina 2023. Desde nuestros inicios, hemos estado comprometidos con la creación de herramientas que integren tecnología y sostenibilidad ambiental, promoviendo la participación ciudadana y el uso de datos abiertos para la conservación del medio ambiente.</p>
 
-<p style="text-align: justify;">El equipo está compuesto por profesionales y estudiantes de diversas disciplinas: Biología, Física y Antropología. Esta diversidad de conocimientos y experiencias nos permite abordar los desafíos ambientales desde múltiples perspectivas, enriqueciendo nuestras soluciones y fomentando la colaboración interdisciplinaria.</p>
+<p style="text-align: justify;">Nuestro equipo está compuesto por estudiantes de diversas disciplinas: física, biología y antropología. Esta diversidad de conocimientos y experiencias nos permite abordar los desafíos ambientales desde múltiples perspectivas, enriqueciendo nuestras soluciones y fomentando la colaboración interdisciplinaria.</p>
 
 <p style="text-align: justify;">En esta oportunidad, bajo el pseudónimo "Neotropical 3.0", hemos desarrollado una solución al reto "Índices del Futuro: Tierra y mar argentinos" del Hackathon CoAfina 2025. Nuestra propuesta se centra en la creación de índices innovadores que integren datos satelitales y una interfaz amigable para los usuarios, facilitando la comprensión y el análisis de la salud ambiental tanto terrestre como marina en Argentina.</p>
 """, unsafe_allow_html=True)
