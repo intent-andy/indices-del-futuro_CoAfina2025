@@ -122,48 +122,55 @@ def initialize_ee_interactive():
         except:
             return False
 
-# Función para obtener el mapa IET
-def get_iet_map():
+# Función para obtener TODOS los datos del script original
+def get_all_data():
     try:
-        # Definir la región de Córdoba
+        # Definir la región de Córdoba (EXACTO como tu script)
         cordoba = ee.FeatureCollection("FAO/GAUL/2015/level2") \
             .filter(ee.Filter.eq('ADM2_NAME', 'Córdoba'))
         
-        # Obtener imágenes Sentinel-2
+        # Obtener imágenes Sentinel-2 (EXACTO como tu script)
         s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
             .filterBounds(cordoba) \
             .filterDate('2023-01-01', '2023-12-31') \
             .select(['B4', 'B8', 'B11']) \
             .median()
         
-        # Calcular NDVI y NDMI
+        # Calcular NDVI y NDMI (EXACTO como tu script)
         ndvi = s2.normalizedDifference(['B8', 'B4']).rename('NDVI')
         ndmi = s2.normalizedDifference(['B8', 'B11']).rename('NDMI')
         
-        # Obtener datos de precipitación CHIRPS
+        # Obtener datos de precipitación CHIRPS (EXACTO como tu script)
         chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY") \
             .filterBounds(cordoba) \
             .filterDate('2023-01-01', '2023-12-31') \
             .sum() \
             .rename('Precipitation')
         
-        # Obtener datos de áreas urbanas
+        # Obtener datos de áreas urbanas (EXACTO como tu script)
         urban = ee.Image("ESA/WorldCover/v100/2020") \
             .select('Map') \
             .eq(50) \
             .rename('Urban')
         
-        # Calcular Índice IET
+        # Calcular Índice IET (EXACTO como tu script)
         iet = ndvi \
             .multiply(ndmi) \
             .multiply(chirps) \
             .divide(urban.add(1)) \
             .rename('IET')
         
-        return iet.clip(cordoba), cordoba
+        return {
+            'iet': iet.clip(cordoba),
+            'ndvi': ndvi.clip(cordoba),
+            'ndmi': ndmi.clip(cordoba),
+            'precipitation': chirps.clip(cordoba),
+            'cordoba': cordoba
+        }
+        
     except Exception as e:
         st.error(f"Error obteniendo datos de GEE: {e}")
-        return None, None
+        return None
 
 # Crear la interfaz de la aplicación
 def main():
@@ -175,6 +182,7 @@ def main():
         ⚠️ No se pudo inicializar Earth Engine automáticamente.
         La aplicación podría no funcionar correctamente en Streamlit Cloud.
         """)
+        return
     
     # Selector de capas
     capa_seleccionada = st.sidebar.selectbox(
@@ -185,25 +193,30 @@ def main():
     # Opciones de visualización
     st.sidebar.subheader("Ajustes de Visualización")
     
+    # Configuración de paletas y rangos según la capa
     if capa_seleccionada == "Índice IET":
         min_val = st.sidebar.slider("Valor mínimo", 0.0, 0.5, 0.0, 0.01)
         max_val = st.sidebar.slider("Valor máximo", 0.5, 2.0, 1.0, 0.01)
+        palette = ['red', 'yellow', 'green']
     elif capa_seleccionada == "NDVI":
         min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
         max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
+        palette = ['red', 'yellow', 'green']
     elif capa_seleccionada == "NDMI":
         min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
         max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
+        palette = ['brown', 'yellow', 'blue']
     else:  # Precipitación
         min_val = st.sidebar.slider("Valor mínimo (mm)", 0, 500, 0, 10)
         max_val = st.sidebar.slider("Valor máximo (mm)", 500, 2000, 1500, 10)
+        palette = ['white', 'lightblue', 'blue', 'darkblue']
     
     try:
         with st.spinner('Cargando datos desde Google Earth Engine...'):
-            # Obtener los datos
-            iet, cordoba = get_iet_map()
+            # Obtener TODOS los datos una sola vez
+            data = get_all_data()
             
-            if iet is None or cordoba is None:
+            if data is None:
                 st.error("No se pudieron cargar los datos. Intenta recargar la página.")
                 return
             
@@ -211,103 +224,108 @@ def main():
             m = geemap.Map(
                 center=[-31.4, -64.2], 
                 zoom=7,
-                draw_export=False,
-                layout={'height': '600px'}
+                draw_export=False
             )
             
-            # Configurar parámetros de visualización según la capa seleccionada
+            # Configurar parámetros de visualización
+            vis_params = {
+                'min': min_val,
+                'max': max_val,
+                'palette': palette
+            }
+            
+            # Añadir capa según selección (usando los datos ya calculados)
             if capa_seleccionada == "Índice IET":
-                vis_params = {
-                    'min': min_val,
-                    'max': max_val,
-                    'palette': ['red', 'yellow', 'green', 'darkgreen']
-                }
-                m.addLayer(iet, vis_params, 'Índice IET')
+                m.addLayer(data['iet'], vis_params, 'Índice IET')
+                st.sidebar.info("**Índice IET**: (NDVI × NDMI × Precipitación) / (Áreas Urbanas + 1)")
                 
             elif capa_seleccionada == "NDVI":
-                # Calcular NDVI para mostrar
-                s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
-                    .filterBounds(cordoba) \
-                    .filterDate('2023-01-01', '2023-12-31') \
-                    .select(['B4', 'B8']) \
-                    .median()
-                ndvi = s2.normalizedDifference(['B8', 'B4']).rename('NDVI')
-                vis_params = {
-                    'min': min_val,
-                    'max': max_val,
-                    'palette': ['brown', 'yellow', 'green', 'darkgreen']
-                }
-                m.addLayer(ndvi.clip(cordoba), vis_params, 'NDVI')
+                m.addLayer(data['ndvi'], vis_params, 'NDVI')
+                st.sidebar.info("**NDVI**: (B8 - B4) / (B8 + B4)")
                 
             elif capa_seleccionada == "NDMI":
-                # Calcular NDMI para mostrar
-                s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
-                    .filterBounds(cordoba) \
-                    .filterDate('2023-01-01', '2023-12-31') \
-                    .select(['B8', 'B11']) \
-                    .median()
-                ndmi = s2.normalizedDifference(['B8', 'B11']).rename('NDMI')
-                vis_params = {
-                    'min': min_val,
-                    'max': max_val,
-                    'palette': ['brown', 'yellow', 'blue', 'darkblue']
-                }
-                m.addLayer(ndmi.clip(cordoba), vis_params, 'NDMI')
+                m.addLayer(data['ndmi'], vis_params, 'NDMI')
+                st.sidebar.info("**NDMI**: (B8 - B11) / (B8 + B11)")
                 
             elif capa_seleccionada == "Precipitación":
-                # Obtener precipitación
-                chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY") \
-                    .filterBounds(cordoba) \
-                    .filterDate('2023-01-01', '2023-12-31') \
-                    .sum() \
-                    .rename('Precipitation')
-                vis_params = {
-                    'min': min_val,
-                    'max': max_val,
-                    'palette': ['white', 'lightblue', 'blue', 'darkblue', 'purple']
-                }
-                m.addLayer(chirps.clip(cordoba), vis_params, 'Precipitación 2023')
+                m.addLayer(data['precipitation'], vis_params, 'Precipitación 2023')
+                st.sidebar.info("**Precipitación**: Acumulado anual CHIRPS")
             
             # Añadir la región de Córdoba como contorno
-            m.addLayer(cordoba.style(**{'color': 'black', 'fillColor': '00000000'}), {}, 'Límites Córdoba')
+            m.addLayer(data['cordoba'].style(**{'color': 'black', 'fillColor': '00000000'}), {}, 'Límites Córdoba')
             
             # Añadir control de capas
             m.addLayerControl()
             
         # Mostrar el mapa en Streamlit
         st.subheader(f"🗺️ Mapa de {capa_seleccionada} - Córdoba 2023")
-        try:
-            # intento preferido (geemap/folium tiene to_streamlit en versiones recientes)
-            m.to_streamlit(height=600)
-        except Exception:
-            # fallback: convertir a HTML y mostrar con components.html
-            import streamlit.components.v1 as components
+        
+        # Mostrar información estadística básica
+        with st.expander("📈 Información estadística"):
             try:
-                html = m.to_html()
-                components.html(html, height=600)
+                if capa_seleccionada == "Índice IET":
+                    stats = data['iet'].reduceRegion(
+                        reducer=ee.Reducer.mean(),
+                        geometry=data['cordoba'].geometry(),
+                        scale=1000
+                    ).getInfo()
+                    st.write(f"Valor promedio IET: {stats.get('IET', 'N/A'):.4f}")
+                    
+                elif capa_seleccionada == "NDVI":
+                    stats = data['ndvi'].reduceRegion(
+                        reducer=ee.Reducer.mean(),
+                        geometry=data['cordoba'].geometry(),
+                        scale=1000
+                    ).getInfo()
+                    st.write(f"Valor promedio NDVI: {stats.get('NDVI', 'N/A'):.4f}")
+                    
+                elif capa_seleccionada == "NDMI":
+                    stats = data['ndmi'].reduceRegion(
+                        reducer=ee.Reducer.mean(),
+                        geometry=data['cordoba'].geometry(),
+                        scale=1000
+                    ).getInfo()
+                    st.write(f"Valor promedio NDMI: {stats.get('NDMI', 'N/A'):.4f}")
+                    
+                elif capa_seleccionada == "Precipitación":
+                    stats = data['precipitation'].reduceRegion(
+                        reducer=ee.Reducer.mean(),
+                        geometry=data['cordoba'].geometry(),
+                        scale=1000
+                    ).getInfo()
+                    st.write(f"Precipitación promedio: {stats.get('Precipitation', 'N/A'):.0f} mm")
+                    
             except Exception as e:
-                st.error("No se pudo renderizar el mapa en este entorno: " + str(e))
+                st.write("No se pudieron calcular estadísticas en este momento")
+        
+        # Mostrar el mapa
+        m.to_streamlit(height=600)
         
         # Información adicional
         with st.expander("📊 Información sobre los índices"):
             st.markdown("""
             ### **Índice IET** 
-            Índice compuesto que combina múltiples factores ambientales:
+            **Fórmula exacta del script original**: 
+            ```javascript
+            var iet = ndvi.multiply(ndmi)
+                         .multiply(chirps)
+                         .divide(urban.add(1))
+                         .rename('IET');
+            ```
             
-            - **NDVI** (Índice de Vegetación de Diferencia Normalizada) - Salud de la vegetación
-            - **NDMI** (Índice de Humedad del Suelo) - Contenido de humedad
-            - **Precipitación** (datos CHIRPS) - Lluvia acumulada anual
-            - **Áreas urbanas** (para normalización) - Influencia urbana
-            
-            **Fórmula**: `IET = (NDVI × NDMI × Precipitación) / (Áreas Urbanas + 1)`
+            **Componentes**:
+            - **NDVI** (Índice de Vegetación): `(B8 - B4) / (B8 + B4)`
+            - **NDMI** (Índice de Humedad): `(B8 - B11) / (B8 + B11)`  
+            - **Precipitación**: Acumulado anual CHIRPS
+            - **Áreas urbanas**: Clase 50 de ESA WorldCover
             
             **Interpretación**:
             - 🟢 **Valores altos**: Mejor condición ambiental
             - 🟡 **Valores medios**: Condición moderada  
             - 🔴 **Valores bajos**: Peor condición ambiental
             
-            **Período analizado**: Enero - Diciembre 2023
-            **Resolución**: 30 metros
+            **Período**: Enero - Diciembre 2023
+            **Fuentes**: Sentinel-2, CHIRPS, ESA WorldCover
             """)
             
     except Exception as e:
@@ -316,7 +334,7 @@ def main():
         🔧 **Solución de problemas:**
         - Verifica que Earth Engine esté correctamente configurado
         - Recarga la página
-        - Si el problema persiste, contacta al administrador
+        - Verifica los secrets en Streamlit Cloud
         """)
 
 if __name__ == "__main__":
