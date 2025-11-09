@@ -1,128 +1,232 @@
 import streamlit as st
 import ee
-import folium
-import geemap.foliumap as geemap_folium
-from streamlit_folium import st_folium
-from google.oauth2 import service_account # Importante para la autenticación
+import geemap.foliumap as geemap
+import json
 
-
-# Define el scope/ámbito necesario para Earth Engine
-EE_SCOPES = [
-    'https://www.googleapis.com/auth/cloud-platform',
-    'https://www.googleapis.com/auth/earthengine' 
-]
-
-# --- 0. Configuración de la Página ---
-st.set_page_config(page_title="Índice IET en GEE", layout="wide")
-st.title("🛰️ Visualizador GEE: Índice IET Córdoba (2023)")
-
-# --- 1. Autenticación Segura (Usando Streamlit Secrets) ---
-# Este bloque es el que cambia para el despliegue.
-try:
-    # Obtener las credenciales desde los Secrets de Streamlit
-    # st.secrets["google_credentials"] hace referencia a la sección [google_credentials] en tu TOML
-    creds_dict = st.secrets["google_credentials"]
-    
-    # Crear un objeto de credenciales de Google
-    credentials = service_account.Credentials.from_service_account_info(
-        creds_dict,
-        scopes=EE_SCOPES # <-- Esto resuelve el 'invalid_scope'
-    )
-    
-    # Inicializar Earth Engine con esas credenciales
-    ee.Initialize(credentials=credentials)
-    
-    # Opcional: un mensaje de éxito que solo tú verás mientras depuras
-    # st.success("¡Autenticación con Google Earth Engine exitosa!")
-
-except Exception as e:
-    st.error(f"Error al autenticar o inicializar GEE: {e}")
-    st.error("Por favor, verifica: \n"
-             "1. Que el 'Secret' [google_credentials] esté bien configurado en Streamlit Cloud. \n"
-             "2. Que la cuenta de servicio esté registrada en GEE (earthengine.google.com/signup).")
-    st.stop() # Detiene la ejecución si la autenticación falla
-
-# --- 2. Tu Código GEE (Traducido a Python) ---
-# Esta parte es idéntica a tu lógica original
-try:
-    cordoba = ee.FeatureCollection("FAO/GAUL/2015/level2") \
-        .filter(ee.Filter.eq('ADM2_NAME', 'Córdoba'))
-
-    s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
-        .filterBounds(cordoba) \
-        .filterDate('2023-01-01', '2023-12-31') \
-        .select(['B4', 'B8', 'B11']) \
-        .median() # Usamos median() para tener una sola imagen
-
-    ndvi = s2.normalizedDifference(['B8', 'B4']).rename('NDVI')
-    ndmi = s2.normalizedDifference(['B8', 'B11']).rename('NDMI')
-
-    chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY") \
-        .filterBounds(cordoba) \
-        .filterDate('2023-01-01', '2023-12-31') \
-        .sum() \
-        .rename('Precipitation')
-
-    urban = ee.Image("ESA/WorldCover/v100/2020") \
-        .select('Map') \
-        .eq(50) \
-        .rename('Urban')
-
-    iet = ndvi \
-        .multiply(ndmi) \
-        .multiply(chirps) \
-        .divide(urban.add(1)) \
-        .rename('IET')
-
-    # Recortamos la imagen final a la geometría de Córdoba
-    iet_clipped = iet.clip(cordoba)
-
-    # --- 3. Parámetros de Visualización ---
-    vis_params = {
-        'min': 0,
-        'max': 1,
-        'palette': ['red', 'yellow', 'green']
-    }
-
-    # --- 4. Centrado del Mapa (Obtener info del servidor) ---
-    # Usamos .getInfo() para traer las coordenadas al script
-    region_info = cordoba.geometry().bounds().getInfo()
-    coords = region_info['coordinates'][0]
-    # Calcular el centroide de la caja delimitadora (bounds)
-    center_lon = (coords[0][0] + coords[2][0]) / 2
-    center_lat = (coords[0][1] + coords[1][1]) / 2
-    map_center = [center_lat, center_lon]
-    zoom_start = 7
-
-except Exception as e:
-    st.error(f"Error durante el procesamiento GEE: {e}")
-    st.stop()
-
-
-# --- 5. Creación y Visualización del Mapa Folium ---
-st.markdown("Mapa interactivo del Índice IET:")
-
-# Crear un mapa base de Folium (usamos un fondo más limpio)
-m = folium.Map(location=map_center, zoom_start=zoom_start, tiles="CartoDB positron")
-
-# Añadir tu capa GEE al mapa Folium usando geemap
-geemap_folium.add_ee_layer(
-    m,                # El mapa folium
-    iet_clipped,      # Tu imagen de GEE
-    vis_params,       # Parámetros de visualización
-    'Índice IET'      # Nombre de la capa
+# Configuración de la página
+st.set_page_config(
+    page_title="Mapa IET Córdoba",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# También añadimos el contorno de Córdoba para contexto
-m.add_child(folium.GeoJson(
-    data=cordoba.geometry().getInfo(),
-    style_function=lambda x: {'fillColor': 'none', 'color': 'blue', 'weight': 2},
-    name="Límite Córdoba"
-))
+# Título de la aplicación
+st.title("🌍 Visualización de Índice IET - Córdoba 2023")
 
-# Añadir un control de capas al mapa
-folium.LayerControl().add_to(m)
+# Inicializar Earth Engine para Streamlit Cloud
+def initialize_ee():
+    try:
+        # Para Streamlit Cloud, necesitamos autenticar con service account
+        service_account = st.secrets["EE_SERVICE_ACCOUNT"]
+        credentials = ee.ServiceAccountCredentials(
+            service_account, 
+            st.secrets["EE_PRIVATE_KEY"]
+        )
+        ee.Initialize(credentials)
+        return True
+    except Exception as e:
+        st.error(f"Error inicializando Earth Engine: {e}")
+        return False
 
-# --- 6. Renderizar el mapa en Streamlit ---
-# Usamos st_folium para mostrar el mapa 'm'
-st_folium(m, width=1000, height=600, returned_objects=[])
+# Función alternativa para autenticación interactiva (backup)
+def initialize_ee_interactive():
+    try:
+        ee.Initialize()
+        return True
+    except:
+        try:
+            ee.Authenticate()
+            ee.Initialize()
+            return True
+        except:
+            return False
+
+# Función para obtener el mapa IET
+def get_iet_map():
+    try:
+        # Definir la región de Córdoba
+        cordoba = ee.FeatureCollection("FAO/GAUL/2015/level2") \
+            .filter(ee.Filter.eq('ADM2_NAME', 'Córdoba'))
+        
+        # Obtener imágenes Sentinel-2
+        s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
+            .filterBounds(cordoba) \
+            .filterDate('2023-01-01', '2023-12-31') \
+            .select(['B4', 'B8', 'B11']) \
+            .median()
+        
+        # Calcular NDVI y NDMI
+        ndvi = s2.normalizedDifference(['B8', 'B4']).rename('NDVI')
+        ndmi = s2.normalizedDifference(['B8', 'B11']).rename('NDMI')
+        
+        # Obtener datos de precipitación CHIRPS
+        chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY") \
+            .filterBounds(cordoba) \
+            .filterDate('2023-01-01', '2023-12-31') \
+            .sum() \
+            .rename('Precipitation')
+        
+        # Obtener datos de áreas urbanas
+        urban = ee.Image("ESA/WorldCover/v100/2020") \
+            .select('Map') \
+            .eq(50) \
+            .rename('Urban')
+        
+        # Calcular Índice IET
+        iet = ndvi \
+            .multiply(ndmi) \
+            .multiply(chirps) \
+            .divide(urban.add(1)) \
+            .rename('IET')
+        
+        return iet.clip(cordoba), cordoba
+    except Exception as e:
+        st.error(f"Error obteniendo datos de GEE: {e}")
+        return None, None
+
+# Crear la interfaz de la aplicación
+def main():
+    st.sidebar.title("⚙️ Opciones de Visualización")
+    
+    # Inicializar Earth Engine
+    if not initialize_ee():
+        st.warning("""
+        ⚠️ No se pudo inicializar Earth Engine automáticamente.
+        La aplicación podría no funcionar correctamente en Streamlit Cloud.
+        """)
+    
+    # Selector de capas
+    capa_seleccionada = st.sidebar.selectbox(
+        "Selecciona la capa a visualizar:",
+        ["Índice IET", "NDVI", "NDMI", "Precipitación"]
+    )
+    
+    # Opciones de visualización
+    st.sidebar.subheader("Ajustes de Visualización")
+    
+    if capa_seleccionada == "Índice IET":
+        min_val = st.sidebar.slider("Valor mínimo", 0.0, 0.5, 0.0, 0.01)
+        max_val = st.sidebar.slider("Valor máximo", 0.5, 2.0, 1.0, 0.01)
+    elif capa_seleccionada == "NDVI":
+        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
+        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
+    elif capa_seleccionada == "NDMI":
+        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
+        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
+    else:  # Precipitación
+        min_val = st.sidebar.slider("Valor mínimo (mm)", 0, 500, 0, 10)
+        max_val = st.sidebar.slider("Valor máximo (mm)", 500, 2000, 1500, 10)
+    
+    try:
+        with st.spinner('Cargando datos desde Google Earth Engine...'):
+            # Obtener los datos
+            iet, cordoba = get_iet_map()
+            
+            if iet is None or cordoba is None:
+                st.error("No se pudieron cargar los datos. Intenta recargar la página.")
+                return
+            
+            # Crear el mapa
+            m = geemap.Map(
+                center=[-31.4, -64.2], 
+                zoom=7,
+                draw_export=False,
+                layout={'height': '600px'}
+            )
+            
+            # Configurar parámetros de visualización según la capa seleccionada
+            if capa_seleccionada == "Índice IET":
+                vis_params = {
+                    'min': min_val,
+                    'max': max_val,
+                    'palette': ['red', 'yellow', 'green', 'darkgreen']
+                }
+                m.addLayer(iet, vis_params, 'Índice IET')
+                
+            elif capa_seleccionada == "NDVI":
+                # Calcular NDVI para mostrar
+                s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
+                    .filterBounds(cordoba) \
+                    .filterDate('2023-01-01', '2023-12-31') \
+                    .select(['B4', 'B8']) \
+                    .median()
+                ndvi = s2.normalizedDifference(['B8', 'B4']).rename('NDVI')
+                vis_params = {
+                    'min': min_val,
+                    'max': max_val,
+                    'palette': ['brown', 'yellow', 'green', 'darkgreen']
+                }
+                m.addLayer(ndvi.clip(cordoba), vis_params, 'NDVI')
+                
+            elif capa_seleccionada == "NDMI":
+                # Calcular NDMI para mostrar
+                s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
+                    .filterBounds(cordoba) \
+                    .filterDate('2023-01-01', '2023-12-31') \
+                    .select(['B8', 'B11']) \
+                    .median()
+                ndmi = s2.normalizedDifference(['B8', 'B11']).rename('NDMI')
+                vis_params = {
+                    'min': min_val,
+                    'max': max_val,
+                    'palette': ['brown', 'yellow', 'blue', 'darkblue']
+                }
+                m.addLayer(ndmi.clip(cordoba), vis_params, 'NDMI')
+                
+            elif capa_seleccionada == "Precipitación":
+                # Obtener precipitación
+                chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY") \
+                    .filterBounds(cordoba) \
+                    .filterDate('2023-01-01', '2023-12-31') \
+                    .sum() \
+                    .rename('Precipitation')
+                vis_params = {
+                    'min': min_val,
+                    'max': max_val,
+                    'palette': ['white', 'lightblue', 'blue', 'darkblue', 'purple']
+                }
+                m.addLayer(chirps.clip(cordoba), vis_params, 'Precipitación 2023')
+            
+            # Añadir la región de Córdoba como contorno
+            m.addLayer(cordoba.style(**{'color': 'black', 'fillColor': '00000000'}), {}, 'Límites Córdoba')
+            
+            # Añadir control de capas
+            m.addLayerControl()
+            
+        # Mostrar el mapa en Streamlit
+        st.subheader(f"🗺️ Mapa de {capa_seleccionada} - Córdoba 2023")
+        m.to_streamlit(height=600)
+        
+        # Información adicional
+        with st.expander("📊 Información sobre los índices"):
+            st.markdown("""
+            ### **Índice IET** 
+            Índice compuesto que combina múltiples factores ambientales:
+            
+            - **NDVI** (Índice de Vegetación de Diferencia Normalizada) - Salud de la vegetación
+            - **NDMI** (Índice de Humedad del Suelo) - Contenido de humedad
+            - **Precipitación** (datos CHIRPS) - Lluvia acumulada anual
+            - **Áreas urbanas** (para normalización) - Influencia urbana
+            
+            **Fórmula**: `IET = (NDVI × NDMI × Precipitación) / (Áreas Urbanas + 1)`
+            
+            **Interpretación**:
+            - 🟢 **Valores altos**: Mejor condición ambiental
+            - 🟡 **Valores medios**: Condición moderada  
+            - 🔴 **Valores bajos**: Peor condición ambiental
+            
+            **Período analizado**: Enero - Diciembre 2023
+            **Resolución**: 30 metros
+            """)
+            
+    except Exception as e:
+        st.error(f"❌ Error al generar el mapa: {str(e)}")
+        st.info("""
+        🔧 **Solución de problemas:**
+        - Verifica que Earth Engine esté correctamente configurado
+        - Recarga la página
+        - Si el problema persiste, contacta al administrador
+        """)
+
+if __name__ == "__main__":
+    main()
