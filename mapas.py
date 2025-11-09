@@ -186,6 +186,20 @@ def main():
     # Opciones de visualización
     st.sidebar.subheader("Ajustes de Visualización")
     
+    # Crear el mapa
+    m = geemap.Map(
+        center=[-31.4, -64.2], 
+        zoom=7,
+        draw_export=False
+    )
+    
+    # Configurar parámetros de visualización
+    vis_params = {
+        'min': min_val,
+        'max': max_val,
+        'palette': palette
+    }
+
     # Configuración de paletas y rangos según la capa
     if capa_seleccionada == "Índice IET":
         m.addLayer(data['iet'], vis_params, 'Índice IET')
@@ -220,20 +234,6 @@ def main():
             if data is None:
                 st.error("No se pudieron cargar los datos. Intenta recargar la página.")
                 return
-            
-            # Crear el mapa
-            m = geemap.Map(
-                center=[-31.4, -64.2], 
-                zoom=7,
-                draw_export=False
-            )
-            
-            # Configurar parámetros de visualización
-            vis_params = {
-                'min': min_val,
-                'max': max_val,
-                'palette': palette
-            }
             
             # Añadir capa según selección (usando los datos ya calculados)
             if capa_seleccionada == "Índice IET":
