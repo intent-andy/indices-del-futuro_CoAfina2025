@@ -96,8 +96,8 @@ def initialize_ee_interactive():
 # Función para obtener TODOS los datos del script original
 def get_all_data():
     try:
-        buenos_aires = ee.FeatureCollection("FAO/GAUL/2015/level2") \
-            .filter(ee.Filter.eq('ADM2_NAME', 'Argenitina'))
+        buenos_aires = ee.FeatureCollection("FAO/GAUL/2015/level1") \
+            .filter(ee.Filter.eq('ADM1_NAME', 'Buenos Aires'))
         
         # Obtener imágenes Sentinel-2 (EXACTO como tu script)
         s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
