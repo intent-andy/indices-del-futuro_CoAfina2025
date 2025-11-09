@@ -32,6 +32,8 @@ if missing:
     st.stop()
 
 import json
+import tempfile
+import os
 
 # Configuración de la página
 st.set_page_config(
@@ -45,18 +47,67 @@ st.title("🌍 Visualización de Índice IET - Córdoba 2023")
 
 # Inicializar Earth Engine para Streamlit Cloud
 def initialize_ee():
+    """
+    Intenta inicializar EE con credenciales de servicio en st.secrets.
+    - Soporta clave JSON completa (dict o string) o clave privada PEM con newlines.
+    - Escribe la clave a un archivo temporal y pasa la ruta a ee.ServiceAccountCredentials,
+      luego borra el archivo temporal.
+    - Si faltan secretos, cae en initialize_ee_interactive().
+    """
     try:
-        # Para Streamlit Cloud, necesitamos autenticar con service account
         service_account = st.secrets["EE_SERVICE_ACCOUNT"]
-        credentials = ee.ServiceAccountCredentials(
-            service_account, 
-            st.secrets["EE_PRIVATE_KEY"]
-        )
-        ee.Initialize(credentials)
-        return True
-    except Exception as e:
-        st.error(f"Error inicializando Earth Engine: {e}")
-        return False
+        private_key = st.secrets["EE_PRIVATE_KEY"]
+    except Exception:
+        # No hay secretos: intentar inicialización interactiva (local)
+        return initialize_ee_interactive()
+
+    # Helper para escribir un objeto/str a archivo temporal
+    def _write_temp(content, suffix):
+        tmp = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=suffix, encoding="utf-8")
+        tmp.write(content)
+        tmp.close()
+        return tmp.name
+
+    # Si la clave es un dict (ej. secrets devuelve dict), volcar a JSON
+    if isinstance(private_key, dict):
+        try:
+            key_path = _write_temp(json.dumps(private_key), ".json")
+            creds = ee.ServiceAccountCredentials(service_account, key_path)
+            ee.Initialize(creds)
+            os.remove(key_path)
+            return True
+        except Exception as e:
+            if os.path.exists(key_path):
+                os.remove(key_path)
+            st.error(f"Error inicializando EE con clave JSON: {e}")
+            return False
+
+    # Si la clave es string, intentar parsear como JSON; si falla, tratar como PEM
+    if isinstance(private_key, str):
+        # intentar JSON
+        try:
+            key_obj = json.loads(private_key)
+            key_path = _write_temp(json.dumps(key_obj), ".json")
+            creds = ee.ServiceAccountCredentials(service_account, key_path)
+            ee.Initialize(creds)
+            os.remove(key_path)
+            return True
+        except Exception:
+            # No es JSON: escribir el contenido tal cual (PEM) y pasar la ruta
+            try:
+                key_path = _write_temp(private_key, ".pem")
+                creds = ee.ServiceAccountCredentials(service_account, key_path)
+                ee.Initialize(creds)
+                os.remove(key_path)
+                return True
+            except Exception as e:
+                if os.path.exists(key_path):
+                    os.remove(key_path)
+                st.error(f"Error inicializando EE con clave PEM: {e}")
+                return False
+
+    # Si llega aquí, no se pudo usar el secreto; intentar modo interactivo
+    return initialize_ee_interactive()
 
 # Función alternativa para autenticación interactiva (backup)
 def initialize_ee_interactive():
