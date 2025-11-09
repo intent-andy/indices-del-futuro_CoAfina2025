@@ -1,6 +1,36 @@
 import streamlit as st
-import ee
-import geemap.foliumap as geemap
+
+# Comprobación de dependencias (muestra instrucciones si faltan)
+missing = []
+try:
+    import ee
+except Exception:
+    missing.append("earthengine-api (ee)")
+
+try:
+    import geemap.foliumap as geemap
+except Exception:
+    missing.append("geemap")
+
+try:
+    from streamlit_folium import st_folium
+except Exception:
+    # streamlit_folium es opcional; se usará fallback con components.html
+    st_folium = None
+
+if missing:
+    st.set_page_config(page_title="Mapa IET Córdoba", layout="wide")
+    st.title("🌍 Visualización de Índice IET - Córdoba 2023")
+    st.error(
+        "Faltan paquetes necesarios: " + ", ".join(missing) + ".\n\n"
+        "Instálalos en tu entorno y autentica Earth Engine:\n\n"
+        "pip install earthengine-api geemap streamlit-folium\n\n"
+        "Luego ejecuta:\n\n"
+        "earthengine authenticate\n\n"
+        "Reinicia la aplicación después de instalar y autenticar."
+    )
+    st.stop()
+
 import json
 
 # Configuración de la página
@@ -195,7 +225,17 @@ def main():
             
         # Mostrar el mapa en Streamlit
         st.subheader(f"🗺️ Mapa de {capa_seleccionada} - Córdoba 2023")
-        m.to_streamlit(height=600)
+        try:
+            # intento preferido (geemap/folium tiene to_streamlit en versiones recientes)
+            m.to_streamlit(height=600)
+        except Exception:
+            # fallback: convertir a HTML y mostrar con components.html
+            import streamlit.components.v1 as components
+            try:
+                html = m.to_html()
+                components.html(html, height=600)
+            except Exception as e:
+                st.error("No se pudo renderizar el mapa en este entorno: " + str(e))
         
         # Información adicional
         with st.expander("📊 Información sobre los índices"):
