@@ -89,7 +89,7 @@ def initialize_ee_interactive():
 def get_all_data():
     try:
         # Definir la provincia de Buenos Aires
-        provincia = ee.FeatureCollection("FAO/GAUL/2015/level2") \
+        provincia = ee.FeatureCollection("FAO/GAUL/2015/level1") \
             .filter(ee.Filter.eq('ADM1_NAME', 'Buenos Aires'))
         
         # Obtener imágenes Sentinel-2 (EXACTO como tu script)
