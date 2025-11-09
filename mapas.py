@@ -1,12 +1,49 @@
 import streamlit as st
-import ee
-import geemap.foliumap as geemap
+
+# Comprobación de dependencias (muestra instrucciones si faltan)
+missing = []
+try:
+    import ee
+except Exception:
+    missing.append("earthengine-api (ee)")
+
+try:
+    import geemap.foliumap as geemap
+except Exception:
+    missing.append("geemap")
+
+try:
+    from streamlit_folium import st_folium
+except Exception:
+    # streamlit_folium es opcional; se usará fallback con components.html
+    st_folium = None
+
+if missing:
+    st.set_page_config(page_title="Mapa IET Córdoba", layout="wide")
+    st.title("🌍 Visualización de Índice IET - Córdoba 2023")
+    st.error(
+        "Faltan paquetes necesarios: " + ", ".join(missing) + ".\n\n"
+        "Instálalos en tu entorno y autentica Earth Engine:\n\n"
+        "pip install earthengine-api geemap streamlit-folium\n\n"
+        "Luego ejecuta:\n\n"
+        "earthengine authenticate\n\n"
+        "Reinicia la aplicación después de instalar y autenticar."
+    )
+    st.stop()
+
 import json
 import tempfile
 import os
 
-# Título de la página
-st.markdown('<h1 style="text-align: center;">🌍 Visualización de Índice IET</h1>', unsafe_allow_html=True)
+# Configuración de la página
+st.set_page_config(
+    page_title="Mapa IET Córdoba",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Título de la aplicación
+st.title("🌍 Visualización de Índice IET - Córdoba 2023")
 
 # Inicializar Earth Engine para Streamlit Cloud
 def initialize_ee():
@@ -85,16 +122,17 @@ def initialize_ee_interactive():
         except:
             return False
 
-# Función para obtener todos los datos necesarios de GEE
+# Función para obtener TODOS los datos del script original
 def get_all_data():
     try:
-        # Definir la provincia de Buenos Aires
-        provincia = ee.FeatureCollection("FAO/GAUL/2015/level1") \
-            .filter(ee.Filter.eq('ADM1_NAME', 'Buenos Aires'))
+        # Definir la región de Córdoba (EXACTO como tu script)
+        cordoba = ee.FeatureCollection("FAO/GAUL/2015/level1") \
+            .filter(ee.Filter.eq('ADM1_NAME', 'Buenos Aires')) \
+            .filter(ee.Filter.eq('ADM0_NAME', 'Argentina'))
         
         # Obtener imágenes Sentinel-2 (EXACTO como tu script)
         s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
-            .filterBounds(provincia) \
+            .filterBounds(cordoba) \
             .filterDate('2023-01-01', '2023-12-31') \
             .select(['B4', 'B8', 'B11']) \
             .median()
@@ -105,7 +143,7 @@ def get_all_data():
         
         # Obtener datos de precipitación CHIRPS (EXACTO como tu script)
         chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY") \
-            .filterBounds(provincia) \
+            .filterBounds(cordoba) \
             .filterDate('2023-01-01', '2023-12-31') \
             .sum() \
             .rename('Precipitation')
@@ -124,11 +162,11 @@ def get_all_data():
             .rename('IET')
         
         return {
-            'iet': iet.clip(provincia),
-            'ndvi': ndvi.clip(provincia),
-            'ndmi': ndmi.clip(provincia),
-            'precipitation': chirps.clip(provincia),
-            'provincia': provincia
+            'iet': iet.clip(cordoba),
+            'ndvi': ndvi.clip(cordoba),
+            'ndmi': ndmi.clip(cordoba),
+            'precipitation': chirps.clip(cordoba),
+            'cordoba': cordoba
         }
         
     except Exception as e:
@@ -215,7 +253,7 @@ def main():
                 st.sidebar.info("**Precipitación**: Acumulado anual CHIRPS")
             
             # Añadir la región de Córdoba como contorno
-            m.addLayer(data['provincia'].style(**{'color': 'black', 'fillColor': '00000000'}), {}, 'Límites Córdoba')
+            m.addLayer(data['cordoba'].style(**{'color': 'black', 'fillColor': '00000000'}), {}, 'Límites Córdoba')
             
             # Añadir control de capas
             m.addLayerControl()
@@ -229,7 +267,7 @@ def main():
                 if capa_seleccionada == "Índice IET":
                     stats = data['iet'].reduceRegion(
                         reducer=ee.Reducer.mean(),
-                        geometry=data['provincia'].geometry(),
+                        geometry=data['cordoba'].geometry(),
                         scale=1000
                     ).getInfo()
                     st.write(f"Valor promedio IET: {stats.get('IET', 'N/A'):.4f}")
@@ -237,7 +275,7 @@ def main():
                 elif capa_seleccionada == "NDVI":
                     stats = data['ndvi'].reduceRegion(
                         reducer=ee.Reducer.mean(),
-                        geometry=data['provincia'].geometry(),
+                        geometry=data['cordoba'].geometry(),
                         scale=1000
                     ).getInfo()
                     st.write(f"Valor promedio NDVI: {stats.get('NDVI', 'N/A'):.4f}")
@@ -245,7 +283,7 @@ def main():
                 elif capa_seleccionada == "NDMI":
                     stats = data['ndmi'].reduceRegion(
                         reducer=ee.Reducer.mean(),
-                        geometry=data['provincia'].geometry(),
+                        geometry=data['cordoba'].geometry(),
                         scale=1000
                     ).getInfo()
                     st.write(f"Valor promedio NDMI: {stats.get('NDMI', 'N/A'):.4f}")
@@ -253,7 +291,7 @@ def main():
                 elif capa_seleccionada == "Precipitación":
                     stats = data['precipitation'].reduceRegion(
                         reducer=ee.Reducer.mean(),
-                        geometry=data['provincia'].geometry(),
+                        geometry=data['cordoba'].geometry(),
                         scale=1000
                     ).getInfo()
                     st.write(f"Precipitación promedio: {stats.get('Precipitation', 'N/A'):.0f} mm")
