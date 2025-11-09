@@ -6,4 +6,5 @@ earthengine-api
 geemap
 folium
 streamlit-folium
-google-auth  # Necesario para la autenticación de servicio
+google-auth 
+leafmap
