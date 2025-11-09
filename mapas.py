@@ -226,32 +226,6 @@ def main():
         'palette': palette
     }
 
-    # Configuración de paletas y rangos según la capa
-    if capa_seleccionada == "Índice IET":
-        m.addLayer(data['iet'], vis_params, 'Índice IET')
-        st.sidebar.info("**IET** = (NDMI + SAVI + EVI) / (1 + NDBI)")
-    elif capa_seleccionada == "NDMI":
-        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
-        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
-        palette = ['brown', 'yellow', 'blue']
-    elif capa_seleccionada == "SAVI":
-        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
-        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
-        palette = ['brown', 'yellow', 'green']
-    elif capa_seleccionada == "EVI":
-        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
-        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
-        palette = ['brown', 'yellow', 'green']
-
-    elif capa_seleccionada == "NDBI":
-        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
-        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
-        palette = ['green', 'yellow', 'gray']
-    else:
-        min_val = 0
-        max_val = 1
-        palette = ['blue', 'green', 'red']
-    
     try:
         with st.spinner('Cargando datos desde Google Earth Engine...'):
             # Obtener TODOS los datos una sola vez
