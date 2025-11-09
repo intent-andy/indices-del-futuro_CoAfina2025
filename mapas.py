@@ -192,7 +192,33 @@ def main():
         zoom=7,
         draw_export=False
     )
-    
+    # Configuración de paletas y rangos según la capa
+    if capa_seleccionada == "Índice IET":
+        min_val = st.sidebar.slider("Valor mínimo", 0.0, 0.5, 0.0, 0.01)
+        max_val = st.sidebar.slider("Valor máximo", 0.5, 2.0, 1.0, 0.01)
+        palette = ['red', 'yellow', 'green']
+    elif capa_seleccionada == "NDMI":
+        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
+        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
+        palette = ['brown', 'yellow', 'blue']
+    elif capa_seleccionada == "SAVI":
+        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
+        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
+        palette = ['brown', 'yellow', 'green']
+    elif capa_seleccionada == "EVI":
+        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
+        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
+        palette = ['brown', 'yellow', 'green']
+    elif capa_seleccionada == "NDBI":
+        min_val = st.sidebar.slider("Valor mínimo", -1.0, 0.0, -1.0, 0.1)
+        max_val = st.sidebar.slider("Valor máximo", 0.0, 1.0, 1.0, 0.1)
+        palette = ['green', 'yellow', 'gray']
+    else:
+        # Valores por defecto si ninguna capa coincide
+        min_val = 0
+        max_val = 1
+        palette = ['blue', 'green', 'red']
+
     # Configurar parámetros de visualización
     vis_params = {
         'min': min_val,
