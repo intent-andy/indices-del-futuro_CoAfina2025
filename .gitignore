@@ -145,3 +145,14 @@ cython_debug/
 # OS
 .DS_Store
 Thumbs.db
+
+# Streamlit secrets (do not commit)
+.streamlit/
+.streamlit/secrets.toml
+
+# Earth Engine / service account keys (do not commit)
+service_account.json
+ee_credentials.json
+ee_service_account.json
+private_key.pem
+*.pem
