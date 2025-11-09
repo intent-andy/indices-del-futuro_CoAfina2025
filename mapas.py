@@ -97,7 +97,7 @@ def initialize_ee_interactive():
 def get_all_data():
     try:
         # Definir la región de Córdoba (EXACTO como tu script)
-        cordoba = ee.FeatureCollection("projects/sat-io/open-datasets/FAO/GAUL/GAUL_2024_L2") \
+        cordoba = ee.FeatureCollection("FAO/GAUL/2015/level2") \
             .filter(ee.Filter.eq('ADM2_NAME', 'Córdoba'))
         
         # Obtener imágenes Sentinel-2 (EXACTO como tu script)
