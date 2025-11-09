@@ -1,7 +1,7 @@
 import streamlit as st
 import ee
 import geemap.foliumap as geemap
-from streamlit_folium import st_folium
+# from streamlit_folium import st_folium
 import json
 import tempfile
 import os
