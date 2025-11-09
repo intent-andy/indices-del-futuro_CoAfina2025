@@ -2,7 +2,7 @@ import streamlit as st
 
 # Configuración de la página
 st.set_page_config(
-    page_title="'nombre de la app'",
+    page_title="TERRAMETRICS",
     page_icon=":argentina:",
     layout="wide"
 )
