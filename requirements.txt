@@ -2,3 +2,8 @@ streamlit
 pandas
 numpy
 scikit-learn
+earthengine-api
+geemap
+folium
+streamlit-folium
+google-auth
