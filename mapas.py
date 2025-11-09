@@ -13,13 +13,23 @@ st.markdown("Mostrando el índice IET para Córdoba (2023) calculado en GEE.")
 # --- 1. Inicialización de Earth Engine ---
 # Intentamos inicializar. Si falla, es probable que no esté autenticado.
 try:
-    ee.Initialize()
-except ee.EEException:
-    st.error("Autenticación con Google Earth Engine fallida. "
-             "Por favor, ejecuta `earthengine authenticate` en tu terminal local.")
-    st.stop()
+    # Obtener las credenciales desde los Secrets de Streamlit
+    # st.secrets["google_credentials"] hace referencia a la sección [google_credentials] en tu TOML
+    creds_dict = st.secrets["google_credentials"]
+    
+    # Crear un objeto de credenciales de Google
+    credentials = service_account.Credentials.from_service_account_info(creds_dict)
+    
+    # Inicializar Earth Engine con esas credenciales
+    ee.Initialize(credentials=credentials)
+    
+    st.success("¡Autenticación con Google Earth Engine exitosa!")
+
 except Exception as e:
-    st.error(f"Ocurrió un error al inicializar GEE: {e}")
+    st.error(f"Error al autenticar o inicializar GEE: {e}")
+    st.error("Asegúrate de que: \n"
+             "1. El 'Secret' esté configurado correctamente en Streamlit Cloud. \n"
+             "2. La cuenta de servicio esté registrada en GEE (earthengine.google.com/signup).")
     st.stop()
 
 
