@@ -96,12 +96,17 @@ def initialize_ee_interactive():
 # Función para obtener TODOS los datos del script original
 def get_all_data():
     try:
+        # Definir las regiones
         buenos_aires = ee.FeatureCollection("FAO/GAUL/2015/level1") \
             .filter(ee.Filter.eq('ADM1_NAME', 'Buenos Aires'))
+
+        # Región de Santa Fe
+        santa_fe = ee.FeatureCollection("FAO/GAUL/2015/level1") \
+            .filter(ee.Filter.eq('ADM1_NAME', 'Santa Fe'))
         
         # Obtener imágenes Sentinel-2 (EXACTO como tu script)
         s2 = ee.ImageCollection("COPERNICUS/S2_SR") \
-            .filterBounds(buenos_aires) \
+            .filterBounds(santa_fe) \
             .filterDate('2023-01-01', '2023-12-31') \
             .select(['B4', 'B8', 'B11']) \
             .median()
@@ -112,7 +117,7 @@ def get_all_data():
         
         # Obtener datos de precipitación CHIRPS (EXACTO como tu script)
         chirps = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY") \
-            .filterBounds(buenos_aires) \
+            .filterBounds(santa_fe) \
             .filterDate('2023-01-01', '2023-12-31') \
             .sum() \
             .rename('Precipitation')
@@ -131,10 +136,10 @@ def get_all_data():
             .rename('IET')
         
         return {
-            'iet': iet.clip(buenos_aires),
-            'ndvi': ndvi.clip(buenos_aires),
-            'ndmi': ndmi.clip(buenos_aires),
-            'precipitation': chirps.clip(buenos_aires),
+            'iet': iet.clip(santa_fe),
+            'ndvi': ndvi.clip(santa_fe),
+            'ndmi': ndmi.clip(santa_fe),
+            'precipitation': chirps.clip(santa_fe),
             'buenos_aires': buenos_aires
         }
         
