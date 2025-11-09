@@ -313,6 +313,19 @@ def main():
         
         # Mostrar el mapa
         m.to_streamlit(height=600)
+
+        # Información adicional
+        with st.expander("📊 Información sobre los índices"):
+            st.markdown(f"""
+            **{capa_seleccionada}**:
+            **Interpretación**:
+            - 🟢 **Valores altos**: Mejor condición ambiental
+            - 🟡 **Valores medios**: Condición moderada  
+            - 🔴 **Valores bajos**: Peor condición ambiental
+            
+            **Período**: Enero - Diciembre 2023
+            **Fuentes**: Sentinel-2, CHIRPS, ESA WorldCover
+            """)
             
     except Exception as e:
         st.error(f"❌ Error al generar el mapa: {str(e)}")
